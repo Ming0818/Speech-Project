@@ -101,7 +101,7 @@ def cnn_model_fn(features, labels, mode):
 
 def main(unused_argv):
     # Load training data
-    data = np.load('../speech/extract/test.npz')['testdata']
+    data = np.load('../speech/extract/valid.npz')['testdata']
     train_audio = [x['lmfcc'] for x in data]
     train_l = [x['targets'] for x in data]
     train_data = np.array(train_audio).astype(np.float32)
@@ -132,7 +132,7 @@ def main(unused_argv):
         batch_size=100,
         num_epochs=None,
         shuffle=True)
-    audio_classifier.train(input_fn=train_input_fn, steps=250,hooks=[logging_hook])
+    audio_classifier.train(input_fn=train_input_fn, steps=20000,hooks=[logging_hook])
 
     # Evaluate the model and print results
     eval_input_fn = tf.estimator.inputs.numpy_input_fn(

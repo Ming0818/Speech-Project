@@ -47,16 +47,28 @@ def nsynth_generator(tfrecords_filename):
         yield data, audio
 
 
-tfrecords_filename = '../speech/tfrecord/nsynth-test.tfrecord'
+tfrecords_filename = '../speech/tfrecord/nsynth-train.tfrecord'
+#tfrecords_filename = 'nsynth-test.tfrecord'
 gen_samples = nsynth_generator(tfrecords_filename)
 # metadata, audio = gen_samples.__next__()
 # lmfcc = mfcc(audio, samplerate=metadata['samplerate'])
 
+test_num = 289205
+subset = 30000
 data = []
-for i in range(1000):
-    print(i)
+for i in range(test_num):
+    if i%100 == 0:
+        print(i)
+    if i%subset == 0 and i != 0:
+        output_file = '../speech/extract/train-' + str(np.floor(i/subset).astype(int)) + '.npz'
+        #output_file = 'train-' + str(np.floor(i/subset).astype(int)) + '.npz'
+        print(output_file)
+        np.savez(output_file, testdata=data)
+        data.clear()
     metadata, audio = gen_samples.__next__()
     lmfcc = mfcc(audio, samplerate=metadata['samplerate'])
     data.append({'lmfcc':lmfcc, 'targets':metadata['instrument_family']})
 
-np.savez('../speech/extract/test.npz', testdata=data)
+# output_file = '../speech/extract/train-' + str(np.floor(i%70000)) + '.npz'
+output_file = '../speech/extract/train-' + str(np.floor(test_num/subset).astype(int)) + '.npz'
+np.savez(output_file, testdata=data)
