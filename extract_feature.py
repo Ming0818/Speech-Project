@@ -1,11 +1,11 @@
-import matplotlib.pyplot as plt
+#import matplotlib.pyplot as plt
 import tensorflow as tf
 import numpy as np
-from IPython.display import Audio
+#from IPython.display import Audio
 from python_speech_features import mfcc
-import glob
-from itertools import groupby
-from collections import defaultdict
+#import glob
+#from itertools import groupby
+#from collections import defaultdict
 
 def nsynth_generator(tfrecords_filename):
     for serialized_example in tf.python_io.tf_record_iterator(tfrecords_filename):
@@ -47,7 +47,7 @@ def nsynth_generator(tfrecords_filename):
         yield data, audio
 
 
-tfrecords_filename = 'nsynth-test.tfrecord'
+tfrecords_filename = '../speech/tfrecord/nsynth-test.tfrecord'
 gen_samples = nsynth_generator(tfrecords_filename)
 # metadata, audio = gen_samples.__next__()
 # lmfcc = mfcc(audio, samplerate=metadata['samplerate'])
@@ -59,4 +59,4 @@ for i in range(1000):
     lmfcc = mfcc(audio, samplerate=metadata['samplerate'])
     data.append({'lmfcc':lmfcc, 'targets':metadata['instrument_family']})
 
-np.savez('test.npz', testdata=data)
+np.savez('../speech/extract/test.npz', testdata=data)

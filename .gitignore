@@ -159,3 +159,4 @@ fabric.properties
 # data
 *.npz
 *.tfrecord
+model/

@@ -1,11 +1,11 @@
-import matplotlib.pyplot as plt
+#import matplotlib.pyplot as plt
 import tensorflow as tf
 import numpy as np
-from IPython.display import Audio
-from python_speech_features import mfcc
-import glob
-from itertools import groupby
-from collections import defaultdict
+#from IPython.display import Audio
+#from python_speech_features import mfcc
+#import glob
+#from itertools import groupby
+#from collections import defaultdict
 
 tf.logging.set_verbosity(tf.logging.INFO)
 
@@ -101,24 +101,24 @@ def cnn_model_fn(features, labels, mode):
 
 def main(unused_argv):
     # Load training data
-    data = np.load('test.npz')['testdata']
+    data = np.load('../speech/extract/test.npz')['testdata']
     train_audio = [x['lmfcc'] for x in data]
     train_l = [x['targets'] for x in data]
-    train_data = np.array(train_audio)
+    train_data = np.array(train_audio).astype(np.float32)
     # train_label = np.asarray(train_l, dtype=np.int32)
     train_label = np.array(train_l, dtype=np.int32)
 
     # Load eval data
-    data = np.load('test.npz')['testdata']
+    data = np.load('../speech/extract/test.npz')['testdata']
     val_audio = [x['lmfcc'] for x in data]
     val_l = [x['targets'] for x in data]
-    val_data = np.array(val_audio)
+    val_data = np.array(val_audio).astype(np.float32)
     # val_label = np.asarray(val_l, dtype=np.int32)
     val_label = np.array(val_l, dtype=np.int32)
 
     # Create the Estimator
     # save the model to model_dir
-    audio_classifier = tf.estimator.Estimator(model_fn=cnn_model_fn, model_dir="")
+    audio_classifier = tf.estimator.Estimator(model_fn=cnn_model_fn, model_dir="./model")
 
     # Set up logging for predictions
     # Log the values in the "Softmax" tensor with label "probabilities"
