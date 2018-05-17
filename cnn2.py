@@ -2,8 +2,27 @@ from __future__ import print_function
 import tensorflow as tf
 from tensorflow.examples.tutorials.mnist import input_data
 import numpy as np
+from python_speech_features import mfcc
 # number 1 to 10 data
 # mnist = input_data.read_data_sets('MNIST_data', one_hot=True)
+
+def nsynth_generator(tfrecords_filename):
+    for serialized_example in tf.python_io.tf_record_iterator(tfrecords_filename):
+        example = tf.train.Example()
+        example.ParseFromString(serialized_example)
+        f = example.features.feature
+
+        audio = np.array(f['audio'].float_list.value)
+
+        data = {
+            'samplerate':
+                f['sample_rate'].int64_list.value[0],
+            'instrument_family':
+                f['instrument_family'].int64_list.value[0],
+        }
+
+        yield data, audio
+
 
 def compute_accuracy(v_xs, v_ys):
     global prediction
@@ -79,17 +98,28 @@ else:
 sess.run(init)
 
 # Load training data
-data = np.load('test.npz')['testdata']
-train_audio = [x['lmfcc'] for x in data]
-train_l = [x['targets'] for x in data]
-train_data = np.array(train_audio).astype(np.float32)
-# train_label = np.asarray(train_l, dtype=np.int32)
-train_label = np.array(train_l, dtype=np.int32)
-train_label = np.eye(11)[train_label.reshape(-1)]
+# data = np.load('test.npz')['testdata']
+# train_audio = [x['lmfcc'] for x in data]
+# train_l = [x['targets'] for x in data]
+# train_data = np.array(train_audio).astype(np.float32)
+# # train_label = np.asarray(train_l, dtype=np.int32)
+# train_label = np.array(train_l, dtype=np.int32)
+# train_label = np.eye(11)[train_label.reshape(-1)]
 
+tfrecords_filename = 'nsynth-test.tfrecord'
+gen_samples = nsynth_generator(tfrecords_filename)
+
+batch_size = 100
 for i in range(1000):
-    batch_xs = train_data[i*100:i*100+100]
-    batch_ys = train_label[i*100:i*100+100]
+    train_data = []
+    train_label = []
+    for i in range(batch_size):
+        metadata, audio = gen_samples.__next__()
+        lmfcc = mfcc(audio, samplerate=metadata['samplerate'])
+        train_data.append(lmfcc)
+        train_label.append(metadata['instrument_family'])
+    batch_xs = train_data
+    batch_ys = np.eye(11)[np.array(train_label).reshape(-1)]
     print(batch_ys)
     sess.run(train_step, feed_dict={xs: batch_xs, ys: batch_ys, keep_prob: 0.5})
     if i % 5 == 0:
