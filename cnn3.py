@@ -76,15 +76,16 @@ with lenet5_graph.as_default():
     N_fc2   = 11
 
     ## Weights and biases of layers ##
-    W_conv1 = tf.Variable(tf.truncated_normal([5, 5, 1, C_conv1], stddev=0.1))
-    B_conv1 = tf.Variable(tf.constant(0.1, tf.float32, [C_conv1]))
-    W_conv2 = tf.Variable(tf.truncated_normal([5, 5, C_conv1, C_conv2], stddev=0.1))
-    B_conv2 = tf.Variable(tf.constant(0.1, tf.float32, [C_conv2]))
+    std_dev = 0.01
+    W_conv1 = tf.Variable(tf.truncated_normal([5, 5, 1, C_conv1], stddev=std_dev))
+    B_conv1 = tf.Variable(tf.constant(std_dev, tf.float32, [C_conv1]))
+    W_conv2 = tf.Variable(tf.truncated_normal([5, 5, C_conv1, C_conv2], stddev=std_dev))
+    B_conv2 = tf.Variable(tf.constant(std_dev, tf.float32, [C_conv2]))
 
-    W_fc1 = tf.Variable(tf.truncated_normal([98*2*64, N_fc1], stddev=0.1))
-    B_fc1 = tf.Variable(tf.constant(0.1, tf.float32, [N_fc1]))
-    W_fc2 = tf.Variable(tf.truncated_normal([N_fc1 , N_fc2], stddev=0.1))
-    B_fc2 = tf.Variable(tf.constant(0.1, tf.float32, [N_fc2]))
+    W_fc1 = tf.Variable(tf.truncated_normal([98*2*64, N_fc1], stddev=std_dev))
+    B_fc1 = tf.Variable(tf.constant(std_dev, tf.float32, [N_fc1]))
+    W_fc2 = tf.Variable(tf.truncated_normal([N_fc1 , N_fc2], stddev=std_dev))
+    B_fc2 = tf.Variable(tf.constant(std_dev, tf.float32, [N_fc2]))
 
     def lenet5_model(input_imgs):
         ## Layers ##
@@ -119,7 +120,7 @@ with lenet5_graph.as_default():
     loss = tf.reduce_mean(tf.nn.softmax_cross_entropy_with_logits(logits=logits, labels=Y_train_lbl)) # + beta*regularizers)
 
     ### Gradient Optimizer (Adagrad) ###
-    grad_optimizer = tf.train.AdamOptimizer().minimize(loss)
+    grad_optimizer = tf.train.AdamOptimizer(0.001).minimize(loss)
 
     #wsum = tf.reduce_sum(tf.square(W_conv1)) + tf.reduce_sum(tf.square(W_conv2)) + tf.reduce_sum(tf.square(W_fc1)) + tf.reduce_sum(tf.square(W_fc2)) + tf.reduce_sum(tf.square(W_fc3))
 
@@ -163,12 +164,13 @@ with tf.Session(graph=lenet5_graph) as sess:
             # print(Y_batch.shape)
             feed = {X_train_img : X_batch, Y_train_lbl : Y_batch}
             _, cost, train_predictions = sess.run([grad_optimizer, loss, predict_train], feed_dict=feed)
-            cost_history += [cost]
+            # cost_history += [cost]
             # del feed
             # del X_batch
-            print("Iteration: ", it, " Cost: ", cost, " Minibatch accuracy: ", get_accuracy(train_predictions, Y_batch))
+            # print("Iteration: ", it, " Cost: ", cost, " Minibatch accuracy: ", get_accuracy(train_predictions, Y_batch))
             # del Y_batch
-            if step%100 == 0:
+            if step%10 == 0:
+                cost_history += [cost]
                 valid_cost = 0.0
                 val_iterations = int(np.ceil(len(valid_data)/ batch_size))-1
                 for val_it in range(val_iterations):
@@ -179,8 +181,9 @@ with tf.Session(graph=lenet5_graph) as sess:
                     val_Y_batch = valid_label[val_start:val_end]
                     val_feed = {X_valid_img: val_X_batch, Y_valid_lbl: val_Y_batch}
                     valid_cost += valid_loss.eval(session=sess, feed_dict=val_feed)
+                print("Iteration: ", it, " Cost: ", cost, " Minibatch accuracy: ", get_accuracy(train_predictions, Y_batch))
                 print("Validation Cost:", valid_cost/val_iterations)
-                valid_history += [valid_cost]
+                valid_history += [valid_cost/val_iterations]
                 cost_step += [cost]
                 steps += [step]
             step += 1
