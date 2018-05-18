@@ -40,7 +40,7 @@ def get_accuracy(pred_output, true_output):
     return tf.reduce_mean(tf.cast(tf.equal(tf.argmax(pred_output, 1), tf.argmax(true_output, 1)), tf.float32)).eval() * 100
 
 lenet5_graph = tf.Graph()
-batch_size = 64
+batch_size = 200
 t_label = test_label
 
 with lenet5_graph.as_default():
@@ -135,7 +135,7 @@ with lenet5_graph.as_default():
     predict_test  = tf.nn.softmax(final_output)
 
 epochs = 4
-iterations = int(np.ceil(50000/ batch_size))
+iterations = int(np.ceil(40000/ batch_size))
 # print("Train dataset: ", mnist.train.images.shape, mnist.train.labels.shape)
 # print(" Validation dataset", mnist.validation.images.shape, mnist.validation.labels.shape)
 # print(" Test dataset", mnist.test.images.shape, mnist.test.labels.shape)
@@ -152,6 +152,7 @@ with tf.Session(graph=lenet5_graph) as sess:
     valid_history = []
     cost_step = []
     step = 0
+    acc_history = []
     for ep in range(epochs):
         for it in range(iterations):
             start = it * batch_size
@@ -169,14 +170,15 @@ with tf.Session(graph=lenet5_graph) as sess:
             # del Y_batch
             if step%100 == 0:
                 valid_cost = 0.0
-                val_iterations = int(np.ceil(len(valid_data)/ batch_size))
+                val_iterations = int(np.ceil(len(valid_data)/ batch_size))-1
                 for val_it in range(val_iterations):
-                    start = val_it * batch_size
-                    end = (val_it + 1) * batch_size
-                    X_batch = np.reshape(valid_data[start:end], [batch_size, 399, 13, 1])
-                    Y_batch = valid_label[start:end]
-                    feed = {X_valid_img: X_batch, Y_valid_lbl: Y_batch}
-                    valid_cost += valid_loss.eval(session=sess, feed_dict=feed)
+                    val_start = val_it * batch_size
+                    val_end = (val_it + 1) * batch_size
+                    #print(valid_data[val_start:val_end].shape)
+                    val_X_batch = np.reshape(valid_data[val_start:val_end], [batch_size, 399, 13, 1])
+                    val_Y_batch = valid_label[val_start:val_end]
+                    val_feed = {X_valid_img: val_X_batch, Y_valid_lbl: val_Y_batch}
+                    valid_cost += valid_loss.eval(session=sess, feed_dict=val_feed)
                 print("Validation Cost:", valid_cost/val_iterations)
                 valid_history += [valid_cost]
                 cost_step += [cost]
@@ -185,12 +187,21 @@ with tf.Session(graph=lenet5_graph) as sess:
 
         print("=======================================")
         test_output = predict_test.eval(session=sess)
-        print("Epoch: ", ep, " Test Accuracy: ", get_accuracy(test_output, test_label))
+        epo_acc = get_accuracy(test_output, test_label)
+        acc_history += [epo_acc]
+        print("Epoch: ", ep, " Test Accuracy: ", epo_acc)
         print("=======================================")
     test_output = predict_test.eval(session=sess)
     test_y = np.argmax(test_label, axis=1)
 #    plt.plot(cost_history)
 #    plt.plot(valid_history)
 #    plt.show()
+    print(test_output)
+    print(test_y)
+    np.savetxt('train_cost', cost_history, delimiter = '\n')
+    np.savetxt('valid_cost', valid_history, delimiter = '\n')
+    np.savetxt('accuracy', acc_history, delimiter = '\n')
+    np.savetxt('test_y', test_y, delimiter = '\n')
+    
 
     pass
