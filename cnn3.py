@@ -13,6 +13,9 @@ tf.set_random_seed(0.0)
 data = np.load('../speech/newextractshuffle/trainset1.npz')['data']
 train_audio = [x[0]['lmfcc'] for x in data]
 train_l = [x[0]['targets'] for x in data]
+# data = np.load('test.npz')['testdata']
+# train_audio = [x['lmfcc'] for x in data]
+# train_l = [x['targets'] for x in data]
 train_data = np.array(train_audio).astype(np.float32)
 train_label = np.array(train_l, dtype=np.int32)
 train_label = np.eye(11)[train_label.reshape(-1)]
@@ -52,9 +55,11 @@ with lenet5_graph.as_default():
     X_test_img = tf.constant(test_data)
 
     ## Validation dataset
-    valid_data = np.reshape(valid_data, [len(valid_data), 399, 13, 1])
-    X_valid = tf.constant(valid_data)
-    Y_valid = tf.constant(valid_label)
+    # valid_data = np.reshape(valid_data, [len(valid_data), 399, 13, 1])
+    # X_valid = tf.constant(valid_data)
+    # Y_valid = tf.constant(valid_label)
+    X_valid_img = tf.placeholder(tf.float32, [batch_size, 399, 13, 1])
+    Y_valid_lbl = tf.placeholder(tf.float32, [batch_size, 11])
 
     ###  Hyper-parameters ###
     # learning rate
@@ -108,8 +113,8 @@ with lenet5_graph.as_default():
 
     ### Loss ###
     logits, dummy = lenet5_model(X_train_img)
-    print(logits)
-    print(dummy)
+    # print(logits)
+    # print(dummy)
     #regularizers = tf.nn.l2_loss(W_conv1) + tf.nn.l2_loss(W_conv2) + tf.nn.l2_loss(W_fc1) + tf.nn.l2_loss(W_fc2) + tf.nn.l2_loss(W_fc3)
     loss = tf.reduce_mean(tf.nn.softmax_cross_entropy_with_logits(logits=logits, labels=Y_train_lbl)) # + beta*regularizers)
 
@@ -118,10 +123,10 @@ with lenet5_graph.as_default():
 
     #wsum = tf.reduce_sum(tf.square(W_conv1)) + tf.reduce_sum(tf.square(W_conv2)) + tf.reduce_sum(tf.square(W_fc1)) + tf.reduce_sum(tf.square(W_fc2)) + tf.reduce_sum(tf.square(W_fc3))
 
-    valid_logits, dummy = lenet5_model(X_valid)
-    print(valid_logits)
-    print(dummy)
-    valid_loss = tf.reduce_mean(tf.nn.softmax_cross_entropy_with_logits(logits=valid_logits, labels=Y_valid))
+    valid_logits, dummy = lenet5_model(X_valid_img)
+    # print(valid_logits)
+    # print(dummy)
+    valid_loss = tf.reduce_mean(tf.nn.softmax_cross_entropy_with_logits(logits=valid_logits, labels=Y_valid_lbl))
 
     ### Predictions ###
     predict_train = tf.nn.softmax(logits)
@@ -152,19 +157,27 @@ with tf.Session(graph=lenet5_graph) as sess:
             start = it * batch_size
             end = (it+1) * batch_size
             X_batch= np.reshape(train_data[start:end], [batch_size, 399, 13, 1])
-            print(X_batch.shape)
+            # print(X_batch.shape)
             Y_batch = train_label[start:end]
             # print(Y_batch.shape)
             feed = {X_train_img : X_batch, Y_train_lbl : Y_batch}
             _, cost, train_predictions = sess.run([grad_optimizer, loss, predict_train], feed_dict=feed)
             cost_history += [cost]
-            del feed
-            del X_batch
+            # del feed
+            # del X_batch
             print("Iteration: ", it, " Cost: ", cost, " Minibatch accuracy: ", get_accuracy(train_predictions, Y_batch))
-            del Y_batch
+            # del Y_batch
             if step%100 == 0:
-                valid_cost = valid_loss.eval(session=sess)
-                print("Validation Cost:", valid_cost)
+                valid_cost = 0.0
+                val_iterations = int(np.ceil(len(valid_data)/ batch_size))
+                for val_it in range(val_iterations):
+                    start = val_it * batch_size
+                    end = (val_it + 1) * batch_size
+                    X_batch = np.reshape(valid_data[start:end], [batch_size, 399, 13, 1])
+                    Y_batch = valid_label[start:end]
+                    feed = {X_valid_img: X_batch, Y_valid_lbl: Y_batch}
+                    valid_cost += valid_loss.eval(session=sess, feed_dict=feed)
+                print("Validation Cost:", valid_cost/val_iterations)
                 valid_history += [valid_cost]
                 cost_step += [cost]
                 steps += [step]
