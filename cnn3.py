@@ -2,7 +2,7 @@ import tensorflow as tf
 from tensorflow.contrib.learn.python.learn.datasets.mnist import read_data_sets
 from tensorflow.python.client import timeline
 import numpy as np
-import matplotlib.pyplot as plt
+#import matplotlib.pyplot as plt
 from tensorflow.examples.tutorials.mnist import input_data
 
 tf.set_random_seed(0.0)
@@ -10,21 +10,21 @@ tf.set_random_seed(0.0)
 # mnist = input_data.read_data_sets("./MNIST_data", one_hot=True, reshape=False, validation_size=10000)
 
 
-data = np.load('test.npz')['testdata']
-train_audio = [x['lmfcc'] for x in data]
-train_l = [x['targets'] for x in data]
+data = np.load('../speech/newextractshuffle/trainset1.npz')['data']
+train_audio = [x[0]['lmfcc'] for x in data]
+train_l = [x[0]['targets'] for x in data]
 train_data = np.array(train_audio).astype(np.float32)
 train_label = np.array(train_l, dtype=np.int32)
 train_label = np.eye(11)[train_label.reshape(-1)]
 
-data = np.load('test.npz')['testdata']
+data = np.load('../speech/extract/valid.npz')['testdata']
 valid_audio = [x['lmfcc'] for x in data]
 valid_l = [x['targets'] for x in data]
 valid_data = np.array(valid_audio).astype(np.float32)
 valid_label = np.array(valid_l, dtype=np.int32)
 valid_label = np.eye(11)[valid_label.reshape(-1)]
 
-data = np.load('test.npz')['testdata']
+data = np.load('../speech/extract/test.npz')['testdata']
 test_audio = [x['lmfcc'] for x in data]
 test_l = [x['targets'] for x in data]
 test_data = np.array(test_audio).astype(np.float32)
@@ -37,7 +37,7 @@ def get_accuracy(pred_output, true_output):
     return tf.reduce_mean(tf.cast(tf.equal(tf.argmax(pred_output, 1), tf.argmax(true_output, 1)), tf.float32)).eval() * 100
 
 lenet5_graph = tf.Graph()
-batch_size = 128
+batch_size = 64
 t_label = test_label
 
 with lenet5_graph.as_default():
@@ -151,14 +151,17 @@ with tf.Session(graph=lenet5_graph) as sess:
         for it in range(iterations):
             start = it * batch_size
             end = (it+1) * batch_size
-            X_batch= np.reshape(train_data[start:end], [128, 399, 13, 1])
+            X_batch= np.reshape(train_data[start:end], [batch_size, 399, 13, 1])
             print(X_batch.shape)
             Y_batch = train_label[start:end]
             # print(Y_batch.shape)
             feed = {X_train_img : X_batch, Y_train_lbl : Y_batch}
             _, cost, train_predictions = sess.run([grad_optimizer, loss, predict_train], feed_dict=feed)
             cost_history += [cost]
+            del feed
+            del X_batch
             print("Iteration: ", it, " Cost: ", cost, " Minibatch accuracy: ", get_accuracy(train_predictions, Y_batch))
+            del Y_batch
             if step%100 == 0:
                 valid_cost = valid_loss.eval(session=sess)
                 print("Validation Cost:", valid_cost)
@@ -173,8 +176,8 @@ with tf.Session(graph=lenet5_graph) as sess:
         print("=======================================")
     test_output = predict_test.eval(session=sess)
     test_y = np.argmax(test_label, axis=1)
-    plt.plot(cost_history)
-    plt.plot(valid_history)
-    plt.show()
+#    plt.plot(cost_history)
+#    plt.plot(valid_history)
+#    plt.show()
 
     pass
