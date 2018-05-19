@@ -1,7 +1,6 @@
 #----------------------------------------------------------------------
 # MNIST data classifier using a Conolutional Neural Network.
 #
-# Author: Krzysztof Furman; 15.08.2017
 # TensorBoard support:
 #   :scalars:
 #     - accuracy
