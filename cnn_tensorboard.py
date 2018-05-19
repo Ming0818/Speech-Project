@@ -37,55 +37,56 @@ import numpy as np
 #----------------------------------------------------------------------
 #----------------------------------------------------------------------
 print ("\nImporting the data")
-# data = np.load('example_train.npz', encoding='bytes')['data']
-# train_audio = [x[b'lmfcc'] for x in data]
-# train_l = [x[b'targets'] for x in data]
-# train_data = np.array(train_audio).astype(np.float32)
-# train_label = np.array(train_l, dtype=np.int32)
-# train_label = np.eye(11)[train_label.reshape(-1)]
-#
-# # Load eval data
-# # data = np.load('extract/valid.npz', encoding='bytes')['testdata']
-# data = np.load('example_val.npz', encoding='bytes')['data']
-# val_audio = [x[b'lmfcc'] for x in data]
-# val_l = [x[b'targets'] for x in data]
-# val_data = np.array(val_audio).astype(np.float32)
-# val_label = np.array(val_l, dtype=np.int32)
-# val_label = np.eye(11)[val_label.reshape(-1)]
-#
-# # Load eval data
-# # data = np.load('extract/valid.npz', encoding='bytes')['testdata']
-# data = np.load('example_test.npz', encoding='bytes')['data']
-# test_audio = [x[b'lmfcc'] for x in data]
-# test_l = [x[b'targets'] for x in data]
-# test_data = np.array(test_audio).astype(np.float32)
-# test_label = np.array(test_l, dtype=np.int32)
-# test_label = np.eye(11)[test_label.reshape(-1)]
-# data = np.load('../speech/newextractshuffle/trainset1.npz', encoding='bytes')['data']
-data = np.load('../newextractshuffle/trainset1.npz', encoding='bytes')['data']
-train_audio = [x[0]['lmfcc'] for x in data]
-train_l = [x[0]['targets'] for x in data]
+data = np.load('example_train.npz', encoding='bytes')['data']
+train_audio = [x[b'lmfcc'] for x in data]
+train_l = [x[b'targets'] for x in data]
 train_data = np.array(train_audio).astype(np.float32)
 train_label = np.array(train_l, dtype=np.int32)
 train_label = np.eye(11)[train_label.reshape(-1)]
 
 # Load eval data
-# data = np.load('../speech/extract/valid.npz', encoding='bytes')['testdata']
-data = np.load('../extract/valid.npz', encoding='bytes')['testdata']
-val_audio = [x['lmfcc'] for x in data]
-val_l = [x['targets'] for x in data]
+# data = np.load('extract/valid.npz', encoding='bytes')['testdata']
+data = np.load('example_val.npz', encoding='bytes')['data']
+val_audio = [x[b'lmfcc'] for x in data]
+val_l = [x[b'targets'] for x in data]
 val_data = np.array(val_audio).astype(np.float32)
 val_label = np.array(val_l, dtype=np.int32)
 val_label = np.eye(11)[val_label.reshape(-1)]
 
 # Load eval data
-# data = np.load('../speech/extract/test.npz', encoding='bytes')['testdata']
-data = np.load('../extract/test.npz', encoding='bytes')['testdata']
-test_audio = [x['lmfcc'] for x in data]
-test_l = [x['targets'] for x in data]
+# data = np.load('extract/valid.npz', encoding='bytes')['testdata']
+data = np.load('example_test.npz', encoding='bytes')['data']
+test_audio = [x[b'lmfcc'] for x in data]
+test_l = [x[b'targets'] for x in data]
 test_data = np.array(test_audio).astype(np.float32)
 test_label = np.array(test_l, dtype=np.int32)
 test_label = np.eye(11)[test_label.reshape(-1)]
+
+# # data = np.load('../speech/newextractshuffle/trainset1.npz', encoding='bytes')['data']
+# data = np.load('./newextractshuffle/trainset1.npz', encoding='bytes')['data']
+# train_audio = [x[0]['lmfcc'] for x in data]
+# train_l = [x[0]['targets'] for x in data]
+# train_data = np.array(train_audio).astype(np.float32)
+# train_label = np.array(train_l, dtype=np.int32)
+# train_label = np.eye(11)[train_label.reshape(-1)]
+#
+# # Load eval data
+# # data = np.load('../speech/extract/valid.npz', encoding='bytes')['testdata']
+# data = np.load('./extract/valid.npz', encoding='bytes')['testdata']
+# val_audio = [x['lmfcc'] for x in data]
+# val_l = [x['targets'] for x in data]
+# val_data = np.array(val_audio).astype(np.float32)
+# val_label = np.array(val_l, dtype=np.int32)
+# val_label = np.eye(11)[val_label.reshape(-1)]
+
+# # Load eval data
+# # data = np.load('../speech/extract/test.npz', encoding='bytes')['testdata']
+# data = np.load('./extract/test.npz', encoding='bytes')['testdata']
+# test_audio = [x['lmfcc'] for x in data]
+# test_l = [x['targets'] for x in data]
+# test_data = np.array(test_audio).astype(np.float32)
+# test_label = np.array(test_l, dtype=np.int32)
+# test_label = np.eye(11)[test_label.reshape(-1)]
 
 def nextbatch(data,label,batch_n,start,data_len):
     end = min(start+batch_n,data_len)
@@ -120,7 +121,7 @@ n_outputs= 11
 image_x  = 399
 image_y  = 13
 display_step = 10
-training_epochs = 200
+training_epochs = 20
 image_shape = [-1, image_x, image_y, 1]
 accuracy_size= 400
 batch_size = 200
@@ -303,8 +304,9 @@ print('CNN successfully built.')
 #----------------------------------------------------------------------
 # create session
 sess = tf.Session()
-# initalise variables
-sess.run(tf.global_variables_initializer())
+
+# prepare checkpoint writer
+saver = tf.train.Saver()
 
 # Merge all the summaries and write them out to "mnist_logs"
 merged = tf.summary.merge_all()
@@ -312,31 +314,49 @@ if not os.path.exists(output_directory):
     print('\nOutput directory does not exist - creating...')
     os.makedirs(output_directory)
     os.makedirs(output_directory + '/train')
-    os.makedirs(output_directory + '/test')
+    os.makedirs(output_directory + '/val')
     print('Output directory created.')
+
+    # initalise variables
+    sess.run(tf.global_variables_initializer())
+    print("initialise the model successfully")
+
 else:
+
+    # judge whether the model exit. If True, resore model
+    if os.path.exists('mini-log/checkpoint'):
+        saver.restore(sess, 'mini-log/model_at_20_epochs.ckpt-20')
+        print("restore the model successfully")
+    else:
+        # initalise variables
+        sess.run(tf.global_variables_initializer())
+        print("initialise the model successfully")
+
     print('\nOutput directory already exists - overwriting...')
     shutil.rmtree(output_directory, ignore_errors=True)
     os.makedirs(output_directory)
     os.makedirs(output_directory + '/train')
-    os.makedirs(output_directory + '/test')
+    os.makedirs(output_directory + '/val')
     print('Output directory overwitten.')
+
 # prepare log writers
 train_writer = tf.summary.FileWriter(output_directory + '/train', sess.graph)
 val_writer = tf.summary.FileWriter(output_directory + '/val')
 roc_writer = tf.summary.FileWriter(output_directory)
-# prepare checkpoint writer
-saver = tf.train.Saver()
+
 #----------------------------------------------------------------------
 # Train
 #----------------------------------------------------------------------
 print('\nTraining phase initiated.\n')
+last_index = int(np.loadtxt('last_index'))
+# print(last_index)
+iteration = int(train_data.shape[0]/batch_size)
 for i in range(1,training_epochs+1):
-    iteration = int(train_data.shape[0]/batch_size)
     for j in range(iteration):
         start = j*batch_size
         train_data_len = train_data.shape[0]
         batch_img, batch_lbl = nextbatch(train_data, train_label, batch_size,start,train_data_len)
+        batch_img, batch_lbl = nextbatch_random(train_data, train_label, batch_size)
         val_img, val_lbl = nextbatch_random(val_data, val_label, batch_size)
 
         # run training step
@@ -345,11 +365,11 @@ for i in range(1,training_epochs+1):
         # output the data into TensorBoard summaries every 10 steps
         if (j)%display_step == 0:
             train_summary, train_accuracy = sess.run([merged, accuracy], feed_dict={x:batch_img, y_: batch_lbl,keep_prob: 1.0})
-            train_writer.add_summary(train_summary, (i-1)*iteration+j)
-            print("step %d, training accuracy %g"%((i-1)*iteration+j, train_accuracy))
+            train_writer.add_summary(train_summary, last_index+(i-1)*iteration+j)
+            print("step %d, training accuracy %g"%(last_index+(i-1)*iteration+j, train_accuracy))
 
             val_summary, val_accuracy = sess.run([merged, accuracy], feed_dict={x: val_img,y_: val_lbl,keep_prob: 0.9})
-            val_writer.add_summary(val_summary, (i-1)*iteration+j)
+            val_writer.add_summary(val_summary, last_index+(i-1)*iteration+j)
             print("test accuracy %g"%val_accuracy)
     # output metadata every 100 epochs
     if i % 100 == 0 or i == training_epochs:
@@ -361,16 +381,14 @@ for i in range(1,training_epochs+1):
                               feed_dict={x:batch_img, y_: batch_lbl, keep_prob: 1.0},
                               options=run_options,
                               run_metadata=run_metadata)
-        train_writer.add_run_metadata(run_metadata, 'step%03d' % i)
-        train_writer.add_summary(summary, i)
+        train_writer.add_run_metadata(run_metadata, 'step%03d' % (last_index+i*iteration))
+        train_writer.add_summary(summary, last_index+i*iteration)
     # save checkpoint at the end
     if i == training_epochs:
         print('\nSaving model at ' + str(i) + ' epochs.')
         saver.save(sess, output_directory + "/model_at_" + str(i) + "_epochs.ckpt",
                    global_step=i)
-
-
-
+np.savetxt('last_index', [last_index+training_epochs*iteration], fmt='%i')
 # close writers
 train_writer.close()
 val_writer.close()
