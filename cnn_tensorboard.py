@@ -36,56 +36,58 @@ import numpy as np
 #----------------------------------------------------------------------
 #----------------------------------------------------------------------
 print ("\nImporting the data")
-data = np.load('example_train.npz', encoding='bytes')['data']
-train_audio = [x[b'lmfcc'] for x in data]
-train_l = [x[b'targets'] for x in data]
-train_data = np.array(train_audio).astype(np.float32)
-train_label = np.array(train_l, dtype=np.int32)
-train_label = np.eye(11)[train_label.reshape(-1)]
-
-# Load eval data
-# data = np.load('extract/valid.npz', encoding='bytes')['testdata']
-data = np.load('example_val.npz', encoding='bytes')['data']
-val_audio = [x[b'lmfcc'] for x in data]
-val_l = [x[b'targets'] for x in data]
-val_data = np.array(val_audio).astype(np.float32)
-val_label = np.array(val_l, dtype=np.int32)
-val_label = np.eye(11)[val_label.reshape(-1)]
-
-# Load eval data
-# data = np.load('extract/valid.npz', encoding='bytes')['testdata']
-data = np.load('example_test.npz', encoding='bytes')['data']
-test_audio = [x[b'lmfcc'] for x in data]
-test_l = [x[b'targets'] for x in data]
-test_data = np.array(test_audio).astype(np.float32)
-test_label = np.array(test_l, dtype=np.int32)
-test_label = np.eye(11)[test_label.reshape(-1)]
-
-# # data = np.load('../speech/newextractshuffle/trainset1.npz', encoding='bytes')['data']
-# data = np.load('./newextractshuffle/trainset1.npz', encoding='bytes')['data']
-# train_audio = [x[0]['lmfcc'] for x in data]
-# train_l = [x[0]['targets'] for x in data]
+# data = np.load('example_train.npz', encoding='bytes')['data']
+# train_audio = [x[b'lmfcc'] for x in data]
+# train_l = [x[b'targets'] for x in data]
 # train_data = np.array(train_audio).astype(np.float32)
 # train_label = np.array(train_l, dtype=np.int32)
 # train_label = np.eye(11)[train_label.reshape(-1)]
 #
 # # Load eval data
-# # data = np.load('../speech/extract/valid.npz', encoding='bytes')['testdata']
-# data = np.load('./extract/valid.npz', encoding='bytes')['testdata']
-# val_audio = [x['lmfcc'] for x in data]
-# val_l = [x['targets'] for x in data]
+# # data = np.load('extract/valid.npz', encoding='bytes')['testdata']
+# data = np.load('example_val.npz', encoding='bytes')['data']
+# val_audio = [x[b'lmfcc'] for x in data]
+# val_l = [x[b'targets'] for x in data]
 # val_data = np.array(val_audio).astype(np.float32)
 # val_label = np.array(val_l, dtype=np.int32)
 # val_label = np.eye(11)[val_label.reshape(-1)]
-
+#
 # # Load eval data
-# # data = np.load('../speech/extract/test.npz', encoding='bytes')['testdata']
-# data = np.load('./extract/test.npz', encoding='bytes')['testdata']
-# test_audio = [x['lmfcc'] for x in data]
-# test_l = [x['targets'] for x in data]
+# # data = np.load('extract/valid.npz', encoding='bytes')['testdata']
+# data = np.load('example_test.npz', encoding='bytes')['data']
+# test_audio = [x[b'lmfcc'] for x in data]
+# test_l = [x[b'targets'] for x in data]
 # test_data = np.array(test_audio).astype(np.float32)
 # test_label = np.array(test_l, dtype=np.int32)
 # test_label = np.eye(11)[test_label.reshape(-1)]
+
+# data = np.load('../speech/newextractshuffle/trainset1.npz', encoding='bytes')['data']
+data = np.load('./newextractshuffle/trainset1.npz', encoding='bytes')['data']
+np.append(data, np.load('./newextractshuffle/trainset2.npz', encoding='bytes')['data'])
+np.append(data, np.load('./newextractshuffle/trainset3.npz', encoding='bytes')['data'])
+train_audio = [x[0]['lmfcc'] for x in data]
+train_l = [x[0]['targets'] for x in data]
+train_data = np.array(train_audio).astype(np.float32)
+train_label = np.array(train_l, dtype=np.int32)
+train_label = np.eye(11)[train_label.reshape(-1)]
+
+# Load eval data
+# data = np.load('../speech/extract/valid.npz', encoding='bytes')['testdata']
+data = np.load('./extract/valid.npz', encoding='bytes')['testdata']
+val_audio = [x['lmfcc'] for x in data]
+val_l = [x['targets'] for x in data]
+val_data = np.array(val_audio).astype(np.float32)
+val_label = np.array(val_l, dtype=np.int32)
+val_label = np.eye(11)[val_label.reshape(-1)]
+
+# Load eval data
+# data = np.load('../speech/extract/test.npz', encoding='bytes')['testdata']
+data = np.load('./extract/test.npz', encoding='bytes')['testdata']
+test_audio = [x['lmfcc'] for x in data]
+test_l = [x['targets'] for x in data]
+test_data = np.array(test_audio).astype(np.float32)
+test_label = np.array(test_l, dtype=np.int32)
+test_label = np.eye(11)[test_label.reshape(-1)]
 
 def nextbatch(data,label,batch_n,start,data_len):
     end = min(start+batch_n,data_len)
@@ -123,7 +125,7 @@ display_step = 10
 training_epochs = 20
 image_shape = [-1, image_x, image_y, 1]
 accuracy_size= 400
-batch_size = 200
+batch_size = 400
 learning_rate = 1e-4
 output_directory = 'mini-log/'
 #----------------------------------------------------------------------
